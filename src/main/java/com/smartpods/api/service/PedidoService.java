@@ -125,6 +125,71 @@ public class PedidoService {
         return new EscaneoResponseDTO(true, "Pedido cancelado, locker liberado", locker.getCodigo());
     }
 
+    public DevolucionResponseDTO solicitarDevolucion(Long pedidoId, SolicitarDevolucionDTO dto) {
+    Pedido pedido = pedidoRepository.findById(pedidoId)
+            .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
+
+    if (pedido.getEstado() != EstadoPedido.RETIRADO) {
+        throw new RuntimeException("Solo se puede solicitar devolución de pedidos ya retirados");
+    }
+
+    // Simulación del "sensor" (báscula + cámara), ya que no tenemos hardware real:
+    // 70% de los casos pasa perfecto, 20% queda en revisión, 10% se marca como alerta
+    double azar = Math.random();
+    String resultado;
+    if (azar < 0.70) {
+        resultado = "VERDE";
+    } else if (azar < 0.90) {
+        resultado = "AMARILLO";
+    } else {
+        resultado = "ROJO";
+    }
+
+    pedido.setMotivoDevolucion(dto.getMotivo());
+    pedido.setEvidenciaFoto(dto.getFotoBase64());
+    pedido.setResultadoSimulado(resultado);
+
+    boolean aprobadoAuto = resultado.equals("VERDE");
+    pedido.setEstado(aprobadoAuto ? EstadoPedido.DEVOLUCION_APROBADA : EstadoPedido.EN_DEVOLUCION);
+    pedidoRepository.save(pedido);
+
+    String mensaje = aprobadoAuto
+            ? "Producto validado correctamente. Tu reembolso/cambio fue aprobado automáticamente."
+            : "Tu producto quedó en control de calidad. Un operador revisará tu solicitud.";
+
+    return new DevolucionResponseDTO(aprobadoAuto, resultado, pedido.getEstado().name(), mensaje);
+}
+
+public List<IncidenciaResponseDTO> listarIncidencias() {
+    return pedidoRepository.findByEstado(EstadoPedido.EN_DEVOLUCION)
+            .stream()
+            .map(p -> new IncidenciaResponseDTO(
+                    p.getId(),
+                    p.getNumeroPedido(),
+                    p.getUsuario().getNombre(),
+                    p.getProducto(),
+                    p.getMotivoDevolucion(),
+                    p.getEvidenciaFoto(),
+                    p.getResultadoSimulado(),
+                    p.getEstado().name()
+            ))
+            .collect(Collectors.toList());
+}
+
+public String resolverIncidencia(Long pedidoId, boolean aprobar) {
+    Pedido pedido = pedidoRepository.findById(pedidoId)
+            .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
+
+    if (pedido.getEstado() != EstadoPedido.EN_DEVOLUCION) {
+        throw new RuntimeException("Este pedido no tiene una incidencia pendiente");
+    }
+
+    pedido.setEstado(aprobar ? EstadoPedido.DEVOLUCION_APROBADA : EstadoPedido.DEVOLUCION_RECHAZADA);
+    pedidoRepository.save(pedido);
+
+    return aprobar ? "Devolución aprobada manualmente" : "Devolución rechazada";
+}
+
     public DashboardDTO obtenerDashboard() {
         long totalLockers = lockerRepository.count();
         long ocupados = lockerRepository.findByEstado(EstadoLocker.OCUPADO).size();

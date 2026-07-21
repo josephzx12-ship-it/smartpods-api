@@ -2,6 +2,7 @@ package com.smartpods.api.controller;
 
 import com.smartpods.api.dto.PedidoCrearDTO;
 import com.smartpods.api.dto.PedidoResponseDTO;
+import com.smartpods.api.dto.SolicitarDevolucionDTO;
 import com.smartpods.api.service.PedidoService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -48,6 +49,15 @@ public class PedidoController {
     public ResponseEntity<?> cancelar(@PathVariable Long id) {
         try {
             return ResponseEntity.ok(pedidoService.cancelarPedido(id));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/{id}/solicitar-devolucion")
+    public ResponseEntity<?> solicitarDevolucion(@PathVariable Long id, @RequestBody SolicitarDevolucionDTO dto) {
+        try {
+            return ResponseEntity.ok(pedidoService.solicitarDevolucion(id, dto));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }

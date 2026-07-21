@@ -35,6 +35,15 @@ public class Pedido {
     @Column(name = "fecha_creacion")
     private LocalDateTime fechaCreacion;
 
+    @Column(name = "motivo_devolucion")
+    private String motivoDevolucion; // "DEVOLUCION" o "CAMBIO"
+
+    @Column(name = "evidencia_foto", columnDefinition = "TEXT")
+    private String evidenciaFoto; // imagen en base64
+
+    @Column(name = "resultado_simulado")
+    private String resultadoSimulado; // "VERDE", "AMARILLO" o "ROJO"
+
     public Pedido() {
     }
 
@@ -61,4 +70,13 @@ public class Pedido {
 
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
     public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }
+
+    public String getMotivoDevolucion() { return motivoDevolucion; }
+    public void setMotivoDevolucion(String motivoDevolucion) { this.motivoDevolucion = motivoDevolucion; }
+
+    public String getEvidenciaFoto() { return evidenciaFoto; }
+    public void setEvidenciaFoto(String evidenciaFoto) { this.evidenciaFoto = evidenciaFoto; }
+
+    public String getResultadoSimulado() { return resultadoSimulado; }
+    public void setResultadoSimulado(String resultadoSimulado) { this.resultadoSimulado = resultadoSimulado; }
 }

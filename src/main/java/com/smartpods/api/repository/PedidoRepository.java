@@ -16,5 +16,7 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
 
     Optional<Pedido> findByQrData(String qrData);
 
+    List<Pedido> findByEstado(EstadoPedido estado);
+
     long countByEstadoAndFechaCreacionAfter(EstadoPedido estado, LocalDateTime fecha);
 }
