@@ -1,10 +1,10 @@
 # SmartPods API
 
-Este proyecto corresponde a la API backend de SmartPods, desarrollada con Spring Boot 4 y Java 17. Actualmente se encuentra en una etapa inicial de construcción, con la base del modelo de usuarios, la capa de servicio, la configuración de seguridad y los endpoints básicos ya implementados.
+API backend de SmartPods desarrollada con Spring Boot 4 y Java 17.
 
 ## Objetivo del proyecto
 
-Crear una API REST para gestionar usuarios y preparar la base para futuras funcionalidades del sistema SmartPods.
+Construir una API REST para gestionar la operativa de SmartPods, incluyendo usuarios, pedidos, lockers y autenticación.
 
 ## Tecnologías utilizadas
 
@@ -13,22 +13,29 @@ Crear una API REST para gestionar usuarios y preparar la base para futuras funci
 - Spring Web
 - Spring Data JPA
 - Spring Security
+- Spring Validation
 - PostgreSQL
 - Maven
+- ZXing (QR code generation)
+- Lombok
 
 ## Estado actual del proyecto
 
-Hasta el momento se tiene:
+Hasta ahora el proyecto incluye:
 
-- Estructura base del proyecto Spring Boot
-- Configuración de seguridad básica para permitir acceso temporal a los endpoints
-- Entidad Usuario con campos principales
-- Repositorio para persistencia de usuarios
-- Servicio con lógica de registro y listado
-- Controlador REST para operaciones de usuarios
-- Conexión configurada a una base de datos PostgreSQL
+- Estructura base de Spring Boot
+- Configuración de seguridad y contraseña encriptada con BCrypt
+- Entidad `Usuario` y su repositorio
+- Servicio `UsuarioService` con registro, login y listado
+- Controladores REST para usuarios, autenticación, administración, pedidos y simulador
+- Entidades de dominio para pedidos y lockers
+- Repositorios y servicios básicos para pedidos y lockers
+- Utilidad de generación de QR (`QrCodeUtil`)
+- Seed inicial de datos (`DataSeeder`)
+- Conexión a base de datos PostgreSQL configurada en `application.properties`
+- Compilación Maven exitosa (`./mvnw.cmd compile`)
 
-## Estructura del proyecto
+## Estructura actual del proyecto
 
 ```text
 smartpods-api/
@@ -36,16 +43,43 @@ smartpods-api/
 │   ├── main/
 │   │   ├── java/com/smartpods/api/
 │   │   │   ├── config/
+│   │   │   │   ├── DataSeeder.java
 │   │   │   │   ├── PasswordConfig.java
 │   │   │   │   └── SecurityConfig.java
 │   │   │   ├── controller/
+│   │   │   │   ├── AdminController.java
+│   │   │   │   ├── AuthController.java
+│   │   │   │   ├── PedidoController.java
+│   │   │   │   ├── SimuladorController.java
 │   │   │   │   └── UsuarioController.java
+│   │   │   ├── dto/
+│   │   │   │   ├── DashboardDTO.java
+│   │   │   │   ├── EscaneoRequestDTO.java
+│   │   │   │   ├── EscaneoResponseDTO.java
+│   │   │   │   ├── LoginDTO.java
+│   │   │   │   ├── LoginResponseDTO.java
+│   │   │   │   ├── PedidoCrearDTO.java
+│   │   │   │   ├── PedidoResponseDTO.java
+│   │   │   │   └── UsuarioRegistroDTO.java
 │   │   │   ├── entity/
+│   │   │   │   ├── EstadoLocker.java
+│   │   │   │   ├── EstadoPedido.java
+│   │   │   │   ├── Locker.java
+│   │   │   │   ├── Pedido.java
+│   │   │   │   ├── Rol.java
+│   │   │   │   ├── TamanoLocker.java
 │   │   │   │   └── Usuario.java
 │   │   │   ├── repository/
+│   │   │   │   ├── LockerRepository.java
+│   │   │   │   ├── PedidoRepository.java
 │   │   │   │   └── UsuarioRepository.java
 │   │   │   ├── service/
+│   │   │   │   ├── PedidoService.java
 │   │   │   │   └── UsuarioService.java
+│   │   │   ├── security/
+│   │   │   │   └── (paquete para futuros componentes de seguridad)
+│   │   │   ├── util/
+│   │   │   │   └── QrCodeUtil.java
 │   │   │   └── SmartpodsApiApplication.java
 │   │   └── resources/
 │   │       └── application.properties
@@ -59,43 +93,54 @@ smartpods-api/
 
 ## Componentes principales
 
-### 1. Controlador
-El controlador `UsuarioController` expone endpoints para:
-- registrar un usuario
-- listar usuarios
+### Controladores
+- `UsuarioController`
+- `AuthController`
+- `AdminController`
+- `PedidoController`
+- `SimuladorController`
 
-### 2. Servicio
-El servicio `UsuarioService` gestiona:
-- encriptación de contraseñas
-- guardado de usuarios
-- consulta de usuarios
+### Servicios
+- `UsuarioService`
+- `PedidoService`
 
-### 3. Entidad
-La entidad `Usuario` representa el modelo principal del sistema y contiene información como:
-- nombre
-- apellido
-- correo
-- password
-- rol
+### Repositorios
+- `UsuarioRepository`
+- `PedidoRepository`
+- `LockerRepository`
 
-### 4. Seguridad
-La configuración actual permite que los endpoints sean accesibles de forma temporal mientras se define la seguridad final del proyecto.
+### Entidades
+- `Usuario`
+- `Pedido`
+- `Locker`
+- `Rol`
+- `EstadoLocker`
+- `EstadoPedido`
+- `TamanoLocker`
+
+### Utilidades
+- `QrCodeUtil`
+- `DataSeeder`
+
+## Dependencias principales
+
+- Spring Boot Starter Web
+- Spring Boot Starter Data JPA
+- Spring Boot Starter Security
+- Spring Boot Starter Validation
+- PostgreSQL driver
+- Lombok
+- ZXing core/javase
 
 ## Configuración de base de datos
 
-La aplicación está conectada a PostgreSQL mediante el archivo de propiedades.
+La conexión a PostgreSQL está definida en `src/main/resources/application.properties`.
 
-## Próximos pasos sugeridos
-
-- Mejorar la seguridad con autenticación real
-- Implementar validaciones más completas para los datos
-- Crear más endpoints para gestión de usuarios
-- Añadir pruebas unitarias y de integración
-- Definir el modelo de negocio completo de SmartPods
+> Nota: Para producción se recomienda mover las credenciales a variables de entorno o un vault, en lugar de dejar `spring.datasource.password` en el archivo de propiedades.
 
 ## Cómo ejecutar el proyecto
 
-Desde la raíz del proyecto, ejecutar:
+Desde la raíz del proyecto:
 
 ```bash
 ./mvnw spring-boot:run
@@ -107,6 +152,17 @@ En Windows:
 mvnw.cmd spring-boot:run
 ```
 
-## Nota
+Para compilar sin ejecutar:
 
-Este README refleja el estado actual del proyecto hasta este momento y puede actualizarse conforme avance el desarrollo.
+```bash
+./mvnw.cmd compile
+```
+
+## Próximos pasos sugeridos
+
+- Completar la seguridad basada en roles y JWT
+- Añadir validación de payloads y manejo de errores
+- Implementar tests unitarios e integración
+- Documentar los endpoints con OpenAPI / Swagger
+- Añadir soporte para gestión completa de pedidos y lockers
+- Mover la configuración sensible fuera del repositorio

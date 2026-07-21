@@ -32,9 +32,10 @@ public class AuthController {
         }
 
         LoginResponseDTO response = new LoginResponseDTO(
+                usuario.getId(),
                 "DEMO-TOKEN-123456",
                 usuario.getNombre(),
-                usuario.getRol()
+                usuario.getRol().name()
         );
 
         return ResponseEntity.ok(response);
