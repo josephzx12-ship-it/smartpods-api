@@ -7,18 +7,20 @@ public class IncidenciaResponseDTO {
     private String producto;
     private String motivoDevolucion;
     private String evidenciaFoto;
+    private String evidenciaPod;
     private String resultadoSimulado;
     private String estado;
 
     public IncidenciaResponseDTO(Long id, String numeroPedido, String nombreUsuario, String producto,
-                                  String motivoDevolucion, String evidenciaFoto, String resultadoSimulado,
-                                  String estado) {
+                                  String motivoDevolucion, String evidenciaFoto, String evidenciaPod,
+                                  String resultadoSimulado, String estado) {
         this.id = id;
         this.numeroPedido = numeroPedido;
         this.nombreUsuario = nombreUsuario;
         this.producto = producto;
         this.motivoDevolucion = motivoDevolucion;
         this.evidenciaFoto = evidenciaFoto;
+        this.evidenciaPod = evidenciaPod;
         this.resultadoSimulado = resultadoSimulado;
         this.estado = estado;
     }
@@ -29,6 +31,7 @@ public class IncidenciaResponseDTO {
     public String getProducto() { return producto; }
     public String getMotivoDevolucion() { return motivoDevolucion; }
     public String getEvidenciaFoto() { return evidenciaFoto; }
+    public String getEvidenciaPod() { return evidenciaPod; }
     public String getResultadoSimulado() { return resultadoSimulado; }
     public String getEstado() { return estado; }
 }

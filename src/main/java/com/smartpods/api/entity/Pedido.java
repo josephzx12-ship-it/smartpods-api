@@ -44,6 +44,12 @@ public class Pedido {
     @Column(name = "resultado_simulado")
     private String resultadoSimulado; // "VERDE", "AMARILLO" o "ROJO"
 
+    @Column(name = "evidencia_pod", columnDefinition = "TEXT")
+    private String evidenciaPod;
+
+    public String getEvidenciaPod() { return evidenciaPod; }
+    public void setEvidenciaPod(String evidenciaPod) { this.evidenciaPod = evidenciaPod; }
+
     public Pedido() {
     }
 

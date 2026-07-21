@@ -43,7 +43,7 @@ public class PedidoService {
         pedido.setEstado(EstadoPedido.PENDIENTE);
         pedido.setFechaCreacion(LocalDateTime.now());
 
-        pedido = pedidoRepository.save(pedido); // primer save, para obtener el ID
+        pedido = pedidoRepository.save(pedido);
 
         String numeroPedido = "PED-" + String.format("%05d", pedido.getId());
         String qrData = numeroPedido + "-POD-" + locker.getCodigo() + "-UNLOCK";
@@ -126,69 +126,63 @@ public class PedidoService {
     }
 
     public DevolucionResponseDTO solicitarDevolucion(Long pedidoId, SolicitarDevolucionDTO dto) {
-    Pedido pedido = pedidoRepository.findById(pedidoId)
-            .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
+        Pedido pedido = pedidoRepository.findById(pedidoId)
+                .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
 
-    if (pedido.getEstado() != EstadoPedido.RETIRADO) {
-        throw new RuntimeException("Solo se puede solicitar devolución de pedidos ya retirados");
+        if (pedido.getEstado() != EstadoPedido.RETIRADO) {
+            throw new RuntimeException("Solo se puede solicitar devolución de pedidos ya retirados");
+        }
+
+        double azar = Math.random();
+        String resultado;
+        if (azar < 0.70) {
+            resultado = "VERDE";
+        } else if (azar < 0.90) {
+            resultado = "AMARILLO";
+        } else {
+            resultado = "ROJO";
+        }
+
+        pedido.setMotivoDevolucion(dto.getMotivo());
+        pedido.setEvidenciaFoto(dto.getFotoBase64());
+        pedido.setResultadoSimulado(resultado);
+        pedido.setEvidenciaPod(generarFotoPodSimulada(resultado));
+
+        boolean aprobadoAuto = resultado.equals("VERDE");
+        pedido.setEstado(aprobadoAuto ? EstadoPedido.DEVOLUCION_APROBADA : EstadoPedido.EN_DEVOLUCION);
+        pedidoRepository.save(pedido);
+
+        String mensaje = aprobadoAuto
+                ? "Producto validado correctamente. Tu reembolso/cambio fue aprobado automáticamente."
+                : "Tu producto quedó en control de calidad. Un operador revisará tu solicitud.";
+
+        return new DevolucionResponseDTO(aprobadoAuto, resultado, pedido.getEstado().name(), mensaje);
     }
 
-    // Simulación del "sensor" (báscula + cámara), ya que no tenemos hardware real:
-    // 70% de los casos pasa perfecto, 20% queda en revisión, 10% se marca como alerta
-    double azar = Math.random();
-    String resultado;
-    if (azar < 0.70) {
-        resultado = "VERDE";
-    } else if (azar < 0.90) {
-        resultado = "AMARILLO";
-    } else {
-        resultado = "ROJO";
+    public List<IncidenciaResponseDTO> listarIncidencias() {
+        return pedidoRepository.findByEstado(EstadoPedido.EN_DEVOLUCION)
+                .stream()
+                .map(p -> new IncidenciaResponseDTO(
+                        p.getId(), p.getNumeroPedido(), p.getUsuario().getNombre(), p.getProducto(),
+                        p.getMotivoDevolucion(), p.getEvidenciaFoto(), p.getEvidenciaPod(),
+                        p.getResultadoSimulado(), p.getEstado().name()
+                ))
+                .collect(Collectors.toList());
     }
 
-    pedido.setMotivoDevolucion(dto.getMotivo());
-    pedido.setEvidenciaFoto(dto.getFotoBase64());
-    pedido.setResultadoSimulado(resultado);
+    public String resolverIncidencia(Long pedidoId, boolean aprobar) {
+        Pedido pedido = pedidoRepository.findById(pedidoId)
+                .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
 
-    boolean aprobadoAuto = resultado.equals("VERDE");
-    pedido.setEstado(aprobadoAuto ? EstadoPedido.DEVOLUCION_APROBADA : EstadoPedido.EN_DEVOLUCION);
-    pedidoRepository.save(pedido);
+        if (pedido.getEstado() != EstadoPedido.EN_DEVOLUCION) {
+            throw new RuntimeException("Este pedido no tiene una incidencia pendiente");
+        }
 
-    String mensaje = aprobadoAuto
-            ? "Producto validado correctamente. Tu reembolso/cambio fue aprobado automáticamente."
-            : "Tu producto quedó en control de calidad. Un operador revisará tu solicitud.";
+        pedido.setEstado(aprobar ? EstadoPedido.DEVOLUCION_APROBADA : EstadoPedido.DEVOLUCION_RECHAZADA);
+        pedidoRepository.save(pedido);
 
-    return new DevolucionResponseDTO(aprobadoAuto, resultado, pedido.getEstado().name(), mensaje);
-}
-
-public List<IncidenciaResponseDTO> listarIncidencias() {
-    return pedidoRepository.findByEstado(EstadoPedido.EN_DEVOLUCION)
-            .stream()
-            .map(p -> new IncidenciaResponseDTO(
-                    p.getId(),
-                    p.getNumeroPedido(),
-                    p.getUsuario().getNombre(),
-                    p.getProducto(),
-                    p.getMotivoDevolucion(),
-                    p.getEvidenciaFoto(),
-                    p.getResultadoSimulado(),
-                    p.getEstado().name()
-            ))
-            .collect(Collectors.toList());
-}
-
-public String resolverIncidencia(Long pedidoId, boolean aprobar) {
-    Pedido pedido = pedidoRepository.findById(pedidoId)
-            .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
-
-    if (pedido.getEstado() != EstadoPedido.EN_DEVOLUCION) {
-        throw new RuntimeException("Este pedido no tiene una incidencia pendiente");
+        return aprobar ? "Devolución aprobada manualmente" : "Devolución rechazada";
     }
-
-    pedido.setEstado(aprobar ? EstadoPedido.DEVOLUCION_APROBADA : EstadoPedido.DEVOLUCION_RECHAZADA);
-    pedidoRepository.save(pedido);
-
-    return aprobar ? "Devolución aprobada manualmente" : "Devolución rechazada";
-}
 
     public DashboardDTO obtenerDashboard() {
         long totalLockers = lockerRepository.count();
@@ -213,5 +207,18 @@ public String resolverIncidencia(Long pedidoId, boolean aprobar) {
                 pedido.getUsuario().getNombre(),
                 pedido.getFechaCreacion()
         );
+    }
+
+    private String generarFotoPodSimulada(String resultado) {
+        String color = resultado.equals("VERDE") ? "#10b981" : resultado.equals("AMARILLO") ? "#f59e0b" : "#ef4444";
+        String texto = resultado.equals("VERDE") ? "PESO OK - SIN ANOMALIAS" : resultado.equals("AMARILLO") ? "DISCREPANCIA DE PESO" : "ETIQUETA NO DETECTADA";
+        String svg = "<svg xmlns='http://www.w3.org/2000/svg' width='300' height='200'>" +
+                "<rect width='300' height='200' fill='#1a1d23'/>" +
+                "<rect x='10' y='10' width='280' height='180' fill='none' stroke='" + color + "' stroke-width='2'/>" +
+                "<circle cx='270' cy='25' r='4' fill='" + color + "'/>" +
+                "<text x='150' y='95' fill='white' font-family='monospace' font-size='11' text-anchor='middle'>CAMARA INTERNA - SMART POD</text>" +
+                "<text x='150' y='115' fill='" + color + "' font-family='monospace' font-size='10' text-anchor='middle'>" + texto + "</text>" +
+                "</svg>";
+        return "data:image/svg+xml;base64," + java.util.Base64.getEncoder().encodeToString(svg.getBytes());
     }
 }
