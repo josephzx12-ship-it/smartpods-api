@@ -1,0 +1,64 @@
+package com.smartpods.api.entity;
+
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "pedidos")
+public class Pedido {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(unique = true)
+    private String numeroPedido;
+
+    @Column(nullable = false)
+    private String producto;
+
+    @ManyToOne
+    @JoinColumn(name = "usuario_id", nullable = false)
+    private Usuario usuario;
+
+    @ManyToOne
+    @JoinColumn(name = "locker_id", nullable = false)
+    private Locker locker;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private EstadoPedido estado;
+
+    @Column(name = "qr_data")
+    private String qrData;
+
+    @Column(name = "fecha_creacion")
+    private LocalDateTime fechaCreacion;
+
+    public Pedido() {
+    }
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getNumeroPedido() { return numeroPedido; }
+    public void setNumeroPedido(String numeroPedido) { this.numeroPedido = numeroPedido; }
+
+    public String getProducto() { return producto; }
+    public void setProducto(String producto) { this.producto = producto; }
+
+    public Usuario getUsuario() { return usuario; }
+    public void setUsuario(Usuario usuario) { this.usuario = usuario; }
+
+    public Locker getLocker() { return locker; }
+    public void setLocker(Locker locker) { this.locker = locker; }
+
+    public EstadoPedido getEstado() { return estado; }
+    public void setEstado(EstadoPedido estado) { this.estado = estado; }
+
+    public String getQrData() { return qrData; }
+    public void setQrData(String qrData) { this.qrData = qrData; }
+
+    public LocalDateTime getFechaCreacion() { return fechaCreacion; }
+    public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }
+}
