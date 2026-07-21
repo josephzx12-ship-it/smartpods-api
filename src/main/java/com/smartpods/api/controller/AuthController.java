@@ -35,7 +35,7 @@ public class AuthController {
                 usuario.getId(),
                 "DEMO-TOKEN-123456",
                 usuario.getNombre(),
-                usuario.getRol().name()
+                usuario.getRol()
         );
 
         return ResponseEntity.ok(response);
