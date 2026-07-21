@@ -122,6 +122,7 @@ public class PedidoService {
                 pedido.getProducto(),
                 pedido.getEstado().name(),
                 pedido.getLocker().getCodigo(),
+                pedido.getLocker().getTamano().name(),
                 pedido.getQrData(),
                 pedido.getUsuario().getNombre(),
                 pedido.getFechaCreacion()
