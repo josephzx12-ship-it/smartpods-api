@@ -4,6 +4,9 @@ import com.smartpods.api.dto.DashboardDTO;
 import com.smartpods.api.dto.IncidenciaResponseDTO;
 import com.smartpods.api.dto.ResolverIncidenciaDTO;
 import com.smartpods.api.service.PedidoService;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.transaction.Transactional;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -16,6 +19,9 @@ import org.springframework.web.bind.annotation.*;
 public class AdminController {
 
     private final PedidoService pedidoService;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     public AdminController(PedidoService pedidoService) {
         this.pedidoService = pedidoService;
@@ -39,5 +45,14 @@ public class AdminController {
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
+    }
+
+    @PostMapping("/fix-constraint")
+    @Transactional
+    public String fixConstraint() {
+        entityManager.createNativeQuery(
+                "ALTER TABLE pedidos DROP CONSTRAINT IF EXISTS pedidos_estado_check"
+        ).executeUpdate();
+        return "Restricción eliminada correctamente";
     }
 }
