@@ -131,7 +131,7 @@ public class PedidoService {
         return new EscaneoResponseDTO(true, "Pedido cancelado, locker liberado", locker.getCodigo());
     }
 
-    public DevolucionResponseDTO solicitarDevolucion(Long pedidoId, SolicitarDevolucionDTO dto) {
+   public DevolucionResponseDTO solicitarDevolucion(Long pedidoId, SolicitarDevolucionDTO dto) {
         Pedido pedido = pedidoRepository.findById(pedidoId)
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
 
@@ -139,30 +139,21 @@ public class PedidoService {
             throw new RuntimeException("Solo se puede solicitar devolución de pedidos ya retirados");
         }
 
+        // El "sensor" solo da una referencia visual para el operador —
+        // ya NO decide automáticamente. Todo pasa a revisión manual.
         double azar = Math.random();
-        String resultado;
-        if (azar < 0.70) {
-            resultado = "VERDE";
-        } else if (azar < 0.90) {
-            resultado = "AMARILLO";
-        } else {
-            resultado = "ROJO";
-        }
+        String resultado = azar < 0.70 ? "VERDE" : azar < 0.90 ? "AMARILLO" : "ROJO";
 
         pedido.setMotivoDevolucion(dto.getMotivo());
         pedido.setEvidenciaFoto(dto.getFotoBase64());
         pedido.setResultadoSimulado(resultado);
         pedido.setEvidenciaPod(generarFotoPodSimulada(resultado));
-
-        boolean aprobadoAuto = resultado.equals("VERDE");
-        pedido.setEstado(aprobadoAuto ? EstadoPedido.DEVOLUCION_APROBADA : EstadoPedido.EN_DEVOLUCION);
+        pedido.setEstado(EstadoPedido.EN_DEVOLUCION);
         pedidoRepository.save(pedido);
 
-        String mensaje = aprobadoAuto
-                ? "Producto validado correctamente. Tu reembolso/cambio fue aprobado automáticamente."
-                : "Tu producto quedó en control de calidad. Un operador revisará tu solicitud.";
+        String mensaje = "Tu solicitud fue enviada. El equipo de Falabella la revisará y te notificaremos el resultado.";
 
-        return new DevolucionResponseDTO(aprobadoAuto, resultado, pedido.getEstado().name(), mensaje);
+        return new DevolucionResponseDTO(false, resultado, pedido.getEstado().name(), mensaje);
     }
 
     public List<IncidenciaResponseDTO> listarIncidencias() {
@@ -176,7 +167,7 @@ public class PedidoService {
                 .collect(Collectors.toList());
     }
 
-    public String resolverIncidencia(Long pedidoId, boolean aprobar) {
+    public String resolverIncidencia(Long pedidoId, String decision) {
         Pedido pedido = pedidoRepository.findById(pedidoId)
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
 
@@ -184,10 +175,27 @@ public class PedidoService {
             throw new RuntimeException("Este pedido no tiene una incidencia pendiente");
         }
 
-        pedido.setEstado(aprobar ? EstadoPedido.DEVOLUCION_APROBADA : EstadoPedido.DEVOLUCION_RECHAZADA);
+        switch (decision) {
+            case "APROBAR":
+                pedido.setEstado(EstadoPedido.DEVOLUCION_APROBADA);
+                break;
+            case "RECHAZAR":
+                pedido.setEstado(EstadoPedido.DEVOLUCION_RECHAZADA);
+                break;
+            case "TIENDA":
+                pedido.setEstado(EstadoPedido.REQUIERE_TIENDA);
+                break;
+            default:
+                throw new RuntimeException("Decisión inválida");
+        }
+
         pedidoRepository.save(pedido);
 
-        return aprobar ? "Devolución aprobada manualmente" : "Devolución rechazada";
+        switch (decision) {
+            case "APROBAR": return "Devolución aprobada";
+            case "RECHAZAR": return "Devolución rechazada";
+            default: return "Se solicitó al cliente acercarse a tienda";
+        }
     }
 
     public DashboardDTO obtenerDashboard() {

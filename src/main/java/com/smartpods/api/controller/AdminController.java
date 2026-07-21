@@ -46,7 +46,7 @@ public class AdminController {
     @PostMapping("/incidencias/{id}/resolver")
     public ResponseEntity<?> resolverIncidencia(@PathVariable Long id, @RequestBody ResolverIncidenciaDTO dto) {
         try {
-            String mensaje = pedidoService.resolverIncidencia(id, dto.isAprobar());
+            String mensaje = pedidoService.resolverIncidencia(id, dto.getDecision());
             return ResponseEntity.ok(mensaje);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());

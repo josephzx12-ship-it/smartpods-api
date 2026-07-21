@@ -1,10 +1,10 @@
 package com.smartpods.api.dto;
 
 public class ResolverIncidenciaDTO {
-    private boolean aprobar;
+    private String decision; // "APROBAR", "RECHAZAR" o "TIENDA"
 
     public ResolverIncidenciaDTO() {}
 
-    public boolean isAprobar() { return aprobar; }
-    public void setAprobar(boolean aprobar) { this.aprobar = aprobar; }
+    public String getDecision() { return decision; }
+    public void setDecision(String decision) { this.decision = decision; }
 }
