@@ -33,14 +33,14 @@ public class AdminController {
         return pedidoService.obtenerDashboard();
     }
 
-    @GetMapping("/incidencias")
-    public List<IncidenciaResponseDTO> incidencias() {
-        return pedidoService.listarIncidencias();
-    }
-
     @GetMapping("/pedidos-todos")
     public List<PedidoResponseDTO> pedidosTodos() {
         return pedidoService.listarTodos();
+    }
+
+    @GetMapping("/incidencias")
+    public List<IncidenciaResponseDTO> incidencias() {
+        return pedidoService.listarIncidencias();
     }
 
     @PostMapping("/incidencias/{id}/resolver")
