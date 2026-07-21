@@ -39,6 +39,7 @@ public class PedidoService {
         Pedido pedido = new Pedido();
         pedido.setUsuario(usuario);
         pedido.setProducto(dto.getProducto());
+        pedido.setCategoria(dto.getCategoria() != null ? dto.getCategoria() : "ROPA");
         pedido.setLocker(locker);
         pedido.setEstado(EstadoPedido.PENDIENTE);
         pedido.setFechaCreacion(LocalDateTime.now());
@@ -67,6 +68,11 @@ public class PedidoService {
 
     public List<PedidoResponseDTO> listarActivos() {
         return pedidoRepository.findByEstadoNot(EstadoPedido.RETIRADO)
+                .stream().map(this::convertirADTO).collect(Collectors.toList());
+    }
+
+    public List<PedidoResponseDTO> listarTodos() {
+        return pedidoRepository.findAll()
                 .stream().map(this::convertirADTO).collect(Collectors.toList());
     }
 
@@ -203,6 +209,7 @@ public class PedidoService {
                 pedido.getEstado().name(),
                 pedido.getLocker().getCodigo(),
                 pedido.getLocker().getTamano().name(),
+                pedido.getCategoria(),
                 pedido.getQrData(),
                 pedido.getUsuario().getNombre(),
                 pedido.getFechaCreacion()

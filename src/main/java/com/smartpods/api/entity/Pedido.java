@@ -47,6 +47,12 @@ public class Pedido {
     @Column(name = "evidencia_pod", columnDefinition = "TEXT")
     private String evidenciaPod;
 
+    @Column(name = "categoria")
+    private String categoria; // "ROPA" o "ELECTRONICO"
+
+    public String getCategoria() { return categoria; }
+    public void setCategoria(String categoria) { this.categoria = categoria; }
+
     public String getEvidenciaPod() { return evidenciaPod; }
     public void setEvidenciaPod(String evidenciaPod) { this.evidenciaPod = evidenciaPod; }
 

@@ -2,6 +2,7 @@ package com.smartpods.api.controller;
 
 import com.smartpods.api.dto.DashboardDTO;
 import com.smartpods.api.dto.IncidenciaResponseDTO;
+import com.smartpods.api.dto.PedidoResponseDTO;
 import com.smartpods.api.dto.ResolverIncidenciaDTO;
 import com.smartpods.api.service.PedidoService;
 import jakarta.persistence.EntityManager;
@@ -35,6 +36,11 @@ public class AdminController {
     @GetMapping("/incidencias")
     public List<IncidenciaResponseDTO> incidencias() {
         return pedidoService.listarIncidencias();
+    }
+
+    @GetMapping("/pedidos-todos")
+    public List<PedidoResponseDTO> pedidosTodos() {
+        return pedidoService.listarTodos();
     }
 
     @PostMapping("/incidencias/{id}/resolver")
