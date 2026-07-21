@@ -104,6 +104,27 @@ public class PedidoService {
         return new EscaneoResponseDTO(true, "Acceso concedido", locker.getCodigo());
     }
 
+    public EscaneoResponseDTO cancelarPedido(Long pedidoId) {
+        Pedido pedido = pedidoRepository.findById(pedidoId)
+                .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
+
+        if (pedido.getEstado() == EstadoPedido.RETIRADO) {
+            return new EscaneoResponseDTO(false, "Este pedido ya fue retirado, no se puede cancelar", null);
+        }
+        if (pedido.getEstado() == EstadoPedido.CANCELADO) {
+            return new EscaneoResponseDTO(false, "Este pedido ya estaba cancelado", null);
+        }
+
+        pedido.setEstado(EstadoPedido.CANCELADO);
+        pedidoRepository.save(pedido);
+
+        Locker locker = pedido.getLocker();
+        locker.setEstado(EstadoLocker.DISPONIBLE);
+        lockerRepository.save(locker);
+
+        return new EscaneoResponseDTO(true, "Pedido cancelado, locker liberado", locker.getCodigo());
+    }
+
     public DashboardDTO obtenerDashboard() {
         long totalLockers = lockerRepository.count();
         long ocupados = lockerRepository.findByEstado(EstadoLocker.OCUPADO).size();

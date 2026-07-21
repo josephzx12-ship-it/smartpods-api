@@ -43,4 +43,13 @@ public class PedidoController {
                 .contentType(MediaType.IMAGE_PNG)
                 .body(imagen);
     }
+
+    @PostMapping("/{id}/cancelar")
+    public ResponseEntity<?> cancelar(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(pedidoService.cancelarPedido(id));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
 }
